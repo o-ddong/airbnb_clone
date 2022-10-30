@@ -34,6 +34,18 @@ class Room(CommonModel):
     def __str__(self) -> str:
         return self.name    
 
+    def rating(self):
+        count = self.reviews.count()
+        if count == 0:
+            return "No Reviews"
+        else:
+            total_rating = 0
+            reviews = self.reviews.all().values("rating")
+            # print(reviews)
+            for review in reviews:
+                total_rating += review["rating"]
+        return round(total_rating // count)
+
     # def total_amenity(self):
     #     return self.amenities.count()    
 
