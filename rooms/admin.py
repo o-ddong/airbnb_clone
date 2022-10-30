@@ -6,7 +6,7 @@ from rooms.models import Amenity, Room
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ("name", "price", "kind", "owner", "total_amenity", "created_at", "updated_at")
+    list_display = ("name", "price", "kind", "owner", "total_amenity", "rating", "created_at", "updated_at")
     list_filter = ("city", "price", "rooms", "toilets", "pet_friendly", "kind", "amenities")
 
     def total_amenity(self, room):
