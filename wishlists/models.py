@@ -9,14 +9,17 @@ class Wishlist(CommonModel):
     name = models.CharField(max_length=150)
     rooms = models.ManyToManyField(
         "rooms.Room",
+        related_name="wishlists"
         # on_delete=models.CASCADE
     )
     experiences = models.ManyToManyField(
         "experiences.Experience",
+        related_name="wishlists"
         # on_delete=models.CASCADE
     )
     user = models.ForeignKey(
         "users.User",
+        related_name="wishlists",
         on_delete=models.CASCADE
     )
 
