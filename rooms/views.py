@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.db import transaction
 
 # Create your views here.
-from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.exceptions import NotFound, ParseError, NotAuthenticated, PermissionDenied
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
@@ -90,6 +90,11 @@ class Rooms(APIView):
             return Response(serializer.errors)
 
 class RoomDetail(APIView):
+    """ Room 상세 조회 및 수정, 삭제
+    Get - 아무나 조회 가능
+    PUT - 관리자만 수정 가능
+    Delete - 관리자만 삭제 가능
+    """
     def get_object(self, pk):
         try:
             return Room.objects.get(id=pk)
@@ -100,3 +105,12 @@ class RoomDetail(APIView):
         room = self.get_object(pk)
         serializer = RoomDetailSerializer(room)
         return Response(serializer.data)
+    
+    def delete(self, request, pk):
+        room = self.get_object(pk)
+        if not request.user.is_authenticated:
+            raise NotAuthenticated
+        if room.owner != request.user:
+            raise PermissionDenied
+        room.delete()
+        return Response(status=HTTP_204_NO_CONTENT)
