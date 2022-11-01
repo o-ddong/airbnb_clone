@@ -1,12 +1,13 @@
 from django.shortcuts import render
 
 # Create your views here.
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 from .models import Amenity, Room
 from .serializer import AmenitySerializer, RoomListSerializer, RoomDetailSerializer
+from categories.models import Category
 
 
 class Amenities(APIView):
@@ -56,6 +57,33 @@ class Rooms(APIView):
         all_rooms = Room.objects.all()
         serializer = RoomListSerializer(all_rooms, many=True)
         return Response(serializer.data)
+
+    def post(self, request):
+        if request.user.is_authentcated:
+            serializer = RoomDetailSerializer(data=request.data)
+            if serializer.is_valid():
+                category_pk = request.data.get("category")
+                if not category_pk:
+                    raise ParseError("Category is required")
+                try:
+                    category = Category.objects.get(pk=category_pk)
+                    if category.kind == Category.CategoryKindChoices.EXPERIENCES:
+                        raise ParseError("The category kind should be rooms")
+                except Category.DoesNotExist:
+                    raise ParseError("Category Not Found")
+                room = serializer.save(owner=request.user, category=category)
+                amenities = request.data.get("amenity")
+                for amenity_pk in amenities:
+                    try:
+                        amenity = Amenity.objects.get(pk=amenity_pk)
+                        room.amenities.add(amenity)
+                    except Amenity.DoesNotExist:
+                        pass
+                        # raise ParseError(f"Amenity with id {amenity_pk} not found")          
+                serializer = RoomDetailSerializer(room)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
 
 class RoomDetail(APIView):
     def get_object(self, pk):
