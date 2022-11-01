@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db import transaction
 
 # Create your views here.
 from rest_framework.exceptions import NotFound, ParseError
@@ -59,7 +60,7 @@ class Rooms(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        if request.user.is_authentcated:
+        if request.user.is_authenticated:
             serializer = RoomDetailSerializer(data=request.data)
             if serializer.is_valid():
                 category_pk = request.data.get("category")
@@ -71,17 +72,20 @@ class Rooms(APIView):
                         raise ParseError("The category kind should be rooms")
                 except Category.DoesNotExist:
                     raise ParseError("Category Not Found")
-                room = serializer.save(owner=request.user, category=category)
-                amenities = request.data.get("amenity")
-                for amenity_pk in amenities:
-                    try:
-                        amenity = Amenity.objects.get(pk=amenity_pk)
-                        room.amenities.add(amenity)
-                    except Amenity.DoesNotExist:
-                        pass
-                        # raise ParseError(f"Amenity with id {amenity_pk} not found")          
-                serializer = RoomDetailSerializer(room)
-                return Response(serializer.data)
+                
+                try:
+                    with transaction.atomic():
+                        room = serializer.save(owner=request.user, category=category)
+                        amenities = request.data.get("amenities")
+                        for amenity_pk in amenities:
+                            print(amenity_pk)
+                            amenity = Amenity.objects.get(pk=amenity_pk)
+                            room.amenities.add(amenity)        
+                        serializer = RoomDetailSerializer(room)
+                        return Response(serializer.data)
+                except Exception:
+                    return Response("Amenity not found")
+                    # raise ParseError(f"Amenity with id {amenity_pk} not found")  
         else:
             return Response(serializer.errors)
 
