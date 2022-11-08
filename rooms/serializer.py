@@ -27,8 +27,7 @@ class RoomDetailSerializer(serializers.ModelSerializer):
         return room.rating()
     
     def get_is_owner(self, room):
-        print(self.context)
-        request = self.context
+        request = self.context["request"]
         return room.owner == request.user
     
 
@@ -49,6 +48,5 @@ class RoomListSerializer(serializers.ModelSerializer):
         return room.rating()
     
     def get_is_owner(self, room):
-        print(dir(self.context["request"]))
         request = self.context["request"]
         return room.owner == request.user
