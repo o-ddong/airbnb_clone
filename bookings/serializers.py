@@ -17,6 +17,36 @@ class CreateRoomBookingSerializer(serializers.ModelSerializer):
             "guests",
         )
 
+    def validate_check_in(self, value):
+        now = timezone.localtime(timezone.now()).date()
+        if now > value:
+            raise serializers.ValidationError("Can't book in the past!")
+        return value
+
+    def validate_check_out(self, value):
+        now = timezone.localtime(timezone.now()).date()
+        if now > value:
+            raise serializers.ValidationError("Can't book in the past!")
+        return value
+
+    def validate(self, data):
+        """
+        11.22 - 11.26 / 11.27 - 11.29 있는 경우
+        11.26 - 11.27 예약 가능해야 하는데 현재는 불가 이거 처리 해야됨
+        """
+        if data["check_out"] <= data["check_in"]:
+            raise serializers.ValidationError("Check in should be smaller than check out")
+        if Booking.objects.filter(
+            check_in__lte=data["check_out"],
+            check_out__gte=data["check_in"],
+        ).exists():
+            raise serializers.ValidationError(
+                "Those (or some) of those dates are already taken"
+            )
+        return data
+
+
+
 
 class PublicBookingSerializer(serializers.Serializer):
     """
