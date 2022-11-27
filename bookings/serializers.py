@@ -1,6 +1,21 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Booking
+
+
+class CreateRoomBookingSerializer(serializers.ModelSerializer):
+
+    check_in = serializers.DateField()
+    check_out = serializers.DateField()
+
+    class Meta:
+        model = Booking
+        fields = (
+            "check_in",
+            "check_out",
+            "guests",
+        )
 
 
 class PublicBookingSerializer(serializers.Serializer):
