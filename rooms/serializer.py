@@ -5,6 +5,7 @@ from reviews.models import Review
 from reviews.serializers import ReviewSerializer
 from rooms.models import Amenity, Room
 from users.serializers import TinyUserSerializer
+from wishlists.models import Wishlist
 
 
 class AmenitySerializer(serializers.ModelSerializer):
@@ -39,6 +40,7 @@ class RoomDetailSerializer(serializers.ModelSerializer):
 class RoomListSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
     is_owner = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
     reviews = ReviewSerializer(
         many=True, read_only=True,
     )
@@ -46,7 +48,7 @@ class RoomListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
         fields = (
-            "pk", "name", "country", "city", "price", "rating", "is_owner", "reviews"
+            "pk", "name", "country", "city", "price", "rating", "is_owner", "is_liked", "reviews"
         )
 
     def get_rating(self, room):
@@ -56,6 +58,12 @@ class RoomListSerializer(serializers.ModelSerializer):
         request = self.context["request"]
         return room.owner == request.user
 
+    def get_is_liked(self, room):
+        request = self.context["request"]
+        return Wishlist.objects.filter(
+            user=request.user,
+            rooms__pk=room.pk,
+        ).exists()
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
