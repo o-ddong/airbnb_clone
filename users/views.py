@@ -1,3 +1,4 @@
+from django.contrib.auth import authenticate, login
 from django.shortcuts import render
 from rest_framework import status
 
@@ -78,3 +79,18 @@ class ChangePassword(APIView):
             return Response(status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class Login(APIView):
+
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        if not username or not password:
+            raise ParseError
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return Response({"ok": "Welcome"})
+        else:
+            return Response({"error": "wrong password"})
